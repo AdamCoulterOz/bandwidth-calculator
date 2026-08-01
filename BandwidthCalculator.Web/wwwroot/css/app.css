@@ -1,83 +1,88 @@
 :root {
-    color-scheme: light;
+    color-scheme: light dark;
+    --font-sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --canvas: #ffffff;
-    --surface-subtle: #f7faff;
-    --surface-panel: #fbfcfe;
-    --surface-selected: #edf8ef;
-    --surface-disabled: #eef2f7;
-    --surface-hover: color-mix(in srgb, var(--blue) 16%, var(--surface-group));
-    --surface-group: #eef1f5;
-    --surface-header: #eef5ff;
+    --surface-subtle: #f5f5f7;
+    --surface-panel: #ffffff;
+    --surface-selected: #e9f9ee;
+    --surface-disabled: #ebebef;
+    --surface-hover: #ebebef;
+    --surface-group: #f5f5f7;
+    --surface-header: rgba(255, 255, 255, 0.72);
     --surface-configuration: var(--surface-group);
-    --ink: #0b1f44;
-    --ink-soft: #263a5b;
-    --muted: #5d6b83;
-    --field-label: #344966;
-    --border: #cbd5e1;
-    --border-strong: #aebbd0;
-    --border-hover: #8190a9;
-    --brand-border: #b8c8e4;
-    --blue: #0f5dde;
-    --blue-action: #0f5dde;
-    --blue-action-hover: #0b49b3;
+    --ink: #1d1d1f;
+    --ink-soft: #6e6e73;
+    --muted: #86868b;
+    --field-label: #6e6e73;
+    --border: #dededf;
+    --border-strong: #c8c8ce;
+    --border-hover: #b0b0b8;
+    --brand-border: #c8c8ce;
+    --blue: #0b5fff;
+    --blue-action: #0b5fff;
+    --blue-action-hover: #094ad1;
     --primary-ink: #ffffff;
-    --cyan: #14a8d4;
-    --green: #16843b;
+    --cyan: #1fa855;
+    --green: #1fa855;
     --red: #d92d20;
     --dsc: #0766dc;
     --support-native-fill: #16843b;
     --support-dsc-fill: #0766dc;
     --support-unsupported-stroke: #d92d20;
-    --focus: #68a5ff;
+    --focus: #0b5fff;
     --error-border: #efb8b2;
     --error-ink: #8f1d13;
     --error-surface: #fff7f6;
-    --loading-track: #e4eaf2;
-    --radius-sm: 5px;
-    --radius: 8px;
-    --shadow-focus: 0 0 0 3px rgb(104 165 255 / 24%);
-    --shadow-overlay: 0 8px 24px rgb(11 31 68 / 14%);
-    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --loading-track: #ebebef;
+    --radius-sm: 10px;
+    --radius: 12px;
+    --radius-xl: 18px;
+    --shadow-focus: 0 0 0 3px #ecf2ff;
+    --shadow-overlay: 0 8px 24px rgb(11 11 12 / 10%), 0 2px 6px rgb(11 11 12 / 4%);
+    --duration-fast: 0.14s;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    font-family: var(--font-sans);
     font-synthesis: none;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        color-scheme: dark;
-        --canvas: #111315;
-        --surface-subtle: #181b1f;
-        --surface-panel: #15181c;
-        --surface-selected: #102b29;
-        --surface-disabled: #2a2e34;
-        --surface-group: #24272b;
-        --surface-header: #1d2024;
+        --canvas: #181a1b;
+        --surface-subtle: #1c1e1f;
+        --surface-panel: #1e2021;
+        --surface-selected: rgb(48 209 88 / 16%);
+        --surface-disabled: #232628;
+        --surface-hover: #232628;
+        --surface-group: #1c1e1f;
+        --surface-header: rgba(24, 26, 27, 0.72);
         --surface-configuration: var(--surface-group);
-        --ink: #f2f6fc;
-        --ink-soft: #c4d0e1;
-        --muted: #96a7bd;
-        --field-label: #bec8d5;
-        --border: #293a51;
-        --border-strong: #40526d;
-        --border-hover: #60728d;
-        --brand-border: #334b6b;
-        --blue: #78afff;
-        --blue-action: #285fc5;
-        --blue-action-hover: #3672dd;
+        --ink: #d5d1cc;
+        --ink-soft: #a2998d;
+        --muted: #7e776c;
+        --field-label: #a2998d;
+        --border: #393e40;
+        --border-strong: #4a4f51;
+        --border-hover: #5c6164;
+        --brand-border: #4a4f51;
+        --blue: #3b78ff;
+        --blue-action: #3b78ff;
+        --blue-action-hover: #5e92ff;
         --primary-ink: #ffffff;
-        --cyan: #4ac9e9;
-        --green: #62d888;
+        --cyan: #30d158;
+        --green: #30d158;
         --red: #ff8178;
         --dsc: #78b7ff;
         --support-native-fill: #16843b;
         --support-dsc-fill: #0766dc;
         --support-unsupported-stroke: #d24c43;
-        --focus: #87b9ff;
+        --focus: #3b78ff;
         --error-border: #7f3e3b;
         --error-ink: #ffaaa4;
         --error-surface: #2a171a;
-        --loading-track: #24344a;
-        --shadow-focus: 0 0 0 3px rgb(120 175 255 / 28%);
-        --shadow-overlay: 0 8px 24px rgb(0 0 0 / 34%);
+        --loading-track: #232628;
+        --shadow-focus: 0 0 0 3px rgb(59 120 255 / 18%);
+        --shadow-overlay: 0 10px 30px rgb(0 0 0 / 50%), 0 3px 8px rgb(0 0 0 / 40%);
     }
 }
 
@@ -100,9 +105,14 @@ body {
     overflow-x: clip;
     background: var(--canvas);
     color: var(--ink);
+    font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: rgb(11 95 255 / 16%);
 }
 
 button,
@@ -148,8 +158,13 @@ a {
 }
 
 .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     width: 100%;
     background: var(--surface-header);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 .app-header-inner {
@@ -158,7 +173,8 @@ a {
     margin: 0 auto;
     align-items: center;
     gap: 12px;
-    padding: 10px 32px;
+    min-height: 64px;
+    padding: 8px 32px;
 }
 
 .app-header-copy {
@@ -177,7 +193,7 @@ a {
     margin: 0;
     color: var(--ink);
     font-size: clamp(1.6rem, 2.3vw, 2.05rem);
-    font-weight: 720;
+    font-weight: 700;
     letter-spacing: -0.035em;
     line-height: 1.08;
 }
@@ -290,7 +306,7 @@ a {
     background-color: var(--canvas);
     color: var(--ink);
     font-size: 0.95rem;
-    transition: background-color 140ms ease;
+    transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .timing-standard-field {
@@ -350,7 +366,7 @@ a {
     background-color: var(--canvas);
     color: var(--ink);
     text-align: left;
-    transition: background-color 140ms ease;
+    transition: background-color var(--duration-fast) var(--ease-out);
 }
 
 .preset-select-trigger:hover,
@@ -1156,6 +1172,8 @@ fieldset:disabled .check-field {
     margin: 0;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius);
+    background: var(--surface-panel);
+    box-shadow: 0 1px 2px rgb(11 11 12 / 5%);
 }
 
 .metric {
@@ -1182,6 +1200,7 @@ fieldset:disabled .check-field {
     gap: 5px;
     margin: 8px 0 4px;
     color: var(--blue);
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums lining-nums;
 }
 
@@ -1230,6 +1249,7 @@ fieldset:disabled .check-field {
 .timing-grid dd {
     margin: 0;
     color: var(--ink);
+    font-family: var(--font-mono);
     font-size: 0.83rem;
     font-variant-numeric: tabular-nums lining-nums;
     text-align: right;
@@ -1343,6 +1363,7 @@ fieldset:disabled .check-field {
     font-size: 0.76rem;
     font-weight: 660;
     white-space: nowrap;
+    font-family: var(--font-mono);
 }
 
 .support-state {

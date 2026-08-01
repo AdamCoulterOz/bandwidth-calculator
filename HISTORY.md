@@ -119,3 +119,9 @@
 - Compacted the smallest colour-control triggers so two-digit depth and `YCbCr` remain visible, while allowing only the Encoding option popup to widen beyond its closed field.
 - Increased field, option, and disclosure-summary interaction contrast by deriving their shared hover/focus fill from the theme blue and connector/configuration group surface.
 - Expanded USB-C family and profile tooltip titles to the unambiguous `USB-C DisplayPort Alt Mode`, appending the profile version only to per-version tooltips while retaining the concise visible `USB-C` heading.
+
+## 2026-08-02: Align the Web UI with Meridian Keel
+
+- Adopted Meridian's Keel palette, Hanken Grotesk and Fira Code typography, radii, focus, motion, and layered surface tokens across the Blazor UI.
+- Recast the compact header as the shared 64-pixel frosted navigation surface and aligned form, metric, compatibility, timing, and tooltip surfaces with the same light/dark system theme.
+- Preserved the calculator's app-specific layout, monitor identity, responsive projections, labels, calculations, and optional exact-capability workflow without changing its public semantic contract.
