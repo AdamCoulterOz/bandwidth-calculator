@@ -1,0 +1,14 @@
+<label for="@For">
+    <ContextTerm Text="@Text" Description="@Description" />
+</label>
+
+@code {
+    [Parameter, EditorRequired]
+    public string For { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Description { get; set; } = string.Empty;
+}

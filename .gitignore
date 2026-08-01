@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+artifacts/
+
+*.lscache
+*.suo
+*.user
+
+.DS_Store
+.idea/
+.playwright-mcp/
+.vscode/
+
+# Local visual-QA captures are not source artifacts.
+bandwidth-calculator-*.png

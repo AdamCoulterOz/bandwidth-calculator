@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BandwidthCalculator.Tests/BandwidthCalculator.Tests.csproj" />
+  <Project Path="BandwidthCalculator.Web/BandwidthCalculator.Web.csproj" />
+  <Project Path="BandwidthCalculator/BandwidthCalculator.csproj" />
+</Solution>

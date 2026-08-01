@@ -1,0 +1,121 @@
+<div class="preset-select"
+     @onfocusin="HandleFocusIn"
+     @onfocusout="HandleFocusOut"
+     @onkeydown="HandleKeyDown">
+    <button @ref="_trigger"
+            id="@Id"
+            type="button"
+            class="preset-select-trigger"
+            aria-haspopup="listbox"
+            aria-expanded="@(_isOpen ? "true" : "false")"
+            aria-controls="@MenuId"
+        @onclick="Toggle">
+        <span class="preset-select-value">
+            @if (SelectedPreset is { } selectedPreset)
+            {
+                <span class="preset-resolution">@FormatResolution(selectedPreset)</span>
+                <span class="preset-name">@selectedPreset.Label</span>
+            }
+            else
+            {
+                <span class="preset-name preset-custom">Custom resolution</span>
+            }
+        </span>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4.25 6.25 8 10l3.75-3.75" />
+        </svg>
+    </button>
+
+    @if (_isOpen)
+    {
+        <div id="@MenuId" class="preset-select-menu" role="listbox" aria-label="Preset resolutions">
+            <button type="button"
+                    class="preset-select-option"
+                    role="option"
+                    aria-selected="@(Value == DisplayResolutionPreset.CustomId ? "true" : "false")"
+                    @onclick="() => SelectAsync(DisplayResolutionPreset.CustomId)">
+                <span class="select-option-marker" aria-hidden="true"></span>
+                <span class="preset-name preset-custom">Custom resolution</span>
+            </button>
+            @foreach (DisplayResolutionPreset preset in DisplayResolutionPreset.All)
+            {
+                <button @key="preset.Id"
+                        type="button"
+                        class="preset-select-option"
+                        role="option"
+                        aria-label="@($"{FormatResolution(preset)} — {preset.Label}")"
+                        aria-selected="@(Value == preset.Id ? "true" : "false")"
+                        @onclick="() => SelectAsync(preset.Id)">
+                    <span class="select-option-marker" aria-hidden="true">@(preset.IsTypical ? "•" : null)</span>
+                    <span class="preset-resolution">@FormatResolution(preset)</span>
+                    <span class="preset-name">@preset.Label</span>
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private ElementReference _trigger;
+    private bool _containsFocus;
+    private bool _isOpen;
+    private int _focusVersion;
+
+    [Parameter]
+    public string Id { get; set; } = "resolution-preset";
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = DisplayResolutionPreset.CustomId;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    private string MenuId => $"{Id}-menu";
+
+    private DisplayResolutionPreset? SelectedPreset => DisplayResolutionPreset.Find(Value);
+
+    private static string FormatResolution(DisplayResolutionPreset preset) =>
+        $"{preset.Width} × {preset.Height}";
+
+    private void Toggle() => _isOpen = !_isOpen;
+
+    private void HandleFocusIn(FocusEventArgs _)
+    {
+        _containsFocus = true;
+        _focusVersion++;
+    }
+
+    private async Task HandleFocusOut(FocusEventArgs _)
+    {
+        _containsFocus = false;
+        int version = ++_focusVersion;
+        await Task.Delay(50);
+        if (version == _focusVersion && !_containsFocus && _isOpen)
+        {
+            _isOpen = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && _isOpen)
+        {
+            _isOpen = false;
+            await _trigger.FocusAsync();
+            return;
+        }
+
+        if (args.Key == "ArrowDown" && !_isOpen)
+        {
+            _isOpen = true;
+        }
+    }
+
+    private async Task SelectAsync(string value)
+    {
+        _isOpen = false;
+        await ValueChanged.InvokeAsync(value);
+        await _trigger.FocusAsync();
+    }
+}

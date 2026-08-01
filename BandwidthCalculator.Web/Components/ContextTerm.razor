@@ -1,0 +1,24 @@
+<span class="context-term"
+      tabindex="0"
+      aria-describedby="@_tooltipId">
+    @Text
+    <span id="@_tooltipId" class="context-tooltip" role="tooltip">
+        <TooltipContent Title="@EffectiveTitle" Description="@Description" />
+    </span>
+</span>
+
+@code {
+    private static int _nextId;
+    private readonly string _tooltipId = $"context-tooltip-{Interlocked.Increment(ref _nextId)}";
+
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Description { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? TooltipTitle { get; set; }
+
+    private string EffectiveTitle => string.IsNullOrWhiteSpace(TooltipTitle) ? Text : TooltipTitle;
+}

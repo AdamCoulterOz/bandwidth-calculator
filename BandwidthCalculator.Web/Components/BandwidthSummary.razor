@@ -1,0 +1,31 @@
+<section class="result-section bandwidth-section" aria-label="Bandwidth summary">
+    <dl class="metric-grid">
+        <div class="metric metric-primary">
+            <dt>Maximum</dt>
+            <dd><strong>@Format(Bandwidth.Maximum)</strong><span>Gb/s</span></dd>
+            <small>Full raster including blanking</small>
+        </div>
+        <div class="metric">
+            <dt>Horizontal active</dt>
+            <dd><strong>@Format(Bandwidth.Line)</strong><span>Gb/s</span></dd>
+            <small>Active width on every line</small>
+        </div>
+        <div class="metric">
+            <dt>Active image</dt>
+            <dd><strong>@Format(Bandwidth.Active)</strong><span>Gb/s</span></dd>
+            <small>Active pixels only</small>
+        </div>
+        <div class="metric metric-accent">
+            <dt>Minimum DSC</dt>
+            <dd><strong>@Format(Bandwidth.MinimumDsc)</strong><span>Gb/s</span></dd>
+            <small>Format quality floor</small>
+        </div>
+    </dl>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public BandwidthBreakdown Bandwidth { get; set; } = null!;
+
+    private static string Format(BitRate rate) => rate.GigabitsPerSecond.ToString("0.00");
+}

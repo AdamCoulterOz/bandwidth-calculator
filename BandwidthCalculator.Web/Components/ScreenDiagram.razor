@@ -1,0 +1,87 @@
+<figure class="screen-diagram" aria-labelledby="@_titleId">
+    <svg viewBox="0 0 360 205" role="img" aria-labelledby="@_titleId @_descriptionId">
+        <title id="@_titleId">Rendered screen proportions</title>
+        <desc id="@_descriptionId">@Width by @Height pixels at @AspectRatioWidth to @AspectRatioHeight, shown relative to a 4K UHD reference.</desc>
+
+        <rect class="screen-current"
+              x="@Format(CurrentX)"
+              y="@Format(CurrentY)"
+              width="@Format(CurrentWidth)"
+              height="@Format(CurrentHeight)" />
+
+        @if (ShowReference)
+        {
+            <g>
+                <rect class="screen-reference"
+                      x="@Format(ReferenceX)"
+                      y="@Format(ReferenceY)"
+                      width="@Format(ReferenceWidth)"
+                      height="@Format(ReferenceHeight)" />
+                <text class="screen-reference-label" x="@Format(ReferenceX + 7)" y="@Format(ReferenceY + 14)">4K reference</text>
+            </g>
+        }
+
+        <line class="screen-dimension-line" x1="@Format(CurrentX)" y1="@Format(CurrentY - 7)" x2="@Format(CurrentX + CurrentWidth)" y2="@Format(CurrentY - 7)" />
+        <line class="screen-dimension-tick" x1="@Format(CurrentX)" y1="@Format(CurrentY - 11)" x2="@Format(CurrentX)" y2="@Format(CurrentY - 3)" />
+        <line class="screen-dimension-tick" x1="@Format(CurrentX + CurrentWidth)" y1="@Format(CurrentY - 11)" x2="@Format(CurrentX + CurrentWidth)" y2="@Format(CurrentY - 3)" />
+        <text class="screen-width-label" x="@Format(CurrentX + (CurrentWidth / 2))" y="@Format(CurrentY - 12)">@Width px</text>
+
+        <line class="screen-dimension-line" x1="@Format(CurrentX - 7)" y1="@Format(CurrentY)" x2="@Format(CurrentX - 7)" y2="@Format(CurrentY + CurrentHeight)" />
+        <line class="screen-dimension-tick" x1="@Format(CurrentX - 11)" y1="@Format(CurrentY)" x2="@Format(CurrentX - 3)" y2="@Format(CurrentY)" />
+        <line class="screen-dimension-tick" x1="@Format(CurrentX - 11)" y1="@Format(CurrentY + CurrentHeight)" x2="@Format(CurrentX - 3)" y2="@Format(CurrentY + CurrentHeight)" />
+        <text class="screen-height-label"
+              x="@Format(CurrentX - 14)"
+              y="@Format(CurrentY + (CurrentHeight / 2))"
+              transform="rotate(-90 @Format(CurrentX - 14) @Format(CurrentY + (CurrentHeight / 2)))">@Height px</text>
+
+        <text class="screen-name-label"
+              x="@Format(CurrentX + (CurrentWidth / 2))"
+              y="@Format(CurrentY + (CurrentHeight / 2) + 4)">@ResolutionName</text>
+    </svg>
+    <figcaption>
+        <span><i class="current-key"></i>Selected active image</span>
+        <span><i class="reference-key"></i>4K UHD pixel-area reference</span>
+    </figcaption>
+</figure>
+
+@code {
+    private const double CanvasWidth = 300d;
+    private const double CanvasHeight = 142d;
+    private const double CanvasLeft = 38d;
+    private const double CanvasTop = 34d;
+    private const int ReferencePixelWidth = 3840;
+    private const int ReferencePixelHeight = 2160;
+    private readonly string _titleId = $"screen-title-{Guid.NewGuid():N}";
+    private readonly string _descriptionId = $"screen-description-{Guid.NewGuid():N}";
+
+    [Parameter]
+    public int Width { get; set; }
+
+    [Parameter]
+    public int Height { get; set; }
+
+    [Parameter]
+    public int AspectRatioWidth { get; set; }
+
+    [Parameter]
+    public int AspectRatioHeight { get; set; }
+
+    [Parameter]
+    public string? ResolutionName { get; set; }
+
+    private int SafeWidth => Math.Max(1, Width);
+    private int SafeHeight => Math.Max(1, Height);
+    private double Scale => Math.Min(
+        CanvasWidth / Math.Max(SafeWidth, ReferencePixelWidth),
+        CanvasHeight / Math.Max(SafeHeight, ReferencePixelHeight));
+    private double CurrentWidth => SafeWidth * Scale;
+    private double CurrentHeight => SafeHeight * Scale;
+    private double ReferenceWidth => ReferencePixelWidth * Scale;
+    private double ReferenceHeight => ReferencePixelHeight * Scale;
+    private double CurrentX => CanvasLeft + ((CanvasWidth - CurrentWidth) / 2);
+    private double CurrentY => CanvasTop + ((CanvasHeight - CurrentHeight) / 2);
+    private double ReferenceX => CanvasLeft + ((CanvasWidth - ReferenceWidth) / 2);
+    private double ReferenceY => CanvasTop + ((CanvasHeight - ReferenceHeight) / 2);
+    private bool ShowReference => Width != ReferencePixelWidth || Height != ReferencePixelHeight;
+    private static string Format(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

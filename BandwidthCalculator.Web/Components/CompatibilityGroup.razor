@@ -1,0 +1,243 @@
+<section class="compatibility-group" aria-labelledby="@HeadingId">
+    <h3 id="@HeadingId">
+        @if (string.IsNullOrWhiteSpace(Description))
+        {
+            @Title
+        }
+        else
+        {
+            <ContextTerm Text="@Title"
+                         TooltipTitle="@EffectiveTooltipTitle"
+                         Description="@Description" />
+        }
+    </h3>
+    <div id="@ListId" class="compatibility-list">
+        @for (int index = 0; index < Evaluations.Count; index++)
+        {
+            InterfaceEvaluation evaluation = Evaluations[index];
+            @if (_showUnsupported || evaluation.Support != InterfaceSupport.No)
+            {
+                <article class="compatibility-row @RowClass(evaluation.Support)">
+                    <div class="profile-copy">
+                        <div class="profile-heading">
+                            <ContextTerm Text="@evaluation.Profile"
+                                         TooltipTitle="@($"{EffectiveTooltipTitle} {evaluation.Profile}")"
+                                         Description="@ProfileInfo(evaluation)" />
+                        </div>
+                    </div>
+                    <div class="support-state"
+                         aria-label="@SupportAriaLabel(evaluation)">
+                        @if (evaluation.Support == InterfaceSupport.Native)
+                        {
+                            <svg class="support-icon support-icon-native" viewBox="0 0 20 20" aria-hidden="true">
+                                <circle cx="10" cy="10" r="8" />
+                                <path d="m6.5 10.2 2.2 2.3 4.9-5" />
+                            </svg>
+                            @if (!string.IsNullOrWhiteSpace(evaluation.SelectedMethod))
+                            {
+                                <ContextTerm Text="@evaluation.SelectedMethod"
+                                             Description="@LinkMethodTooltip(evaluation)" />
+                            }
+                        }
+                        else if (evaluation.Support == InterfaceSupport.Compressed)
+                        {
+                            <svg class="support-icon support-icon-dsc" viewBox="0 0 20 20" aria-hidden="true">
+                                <circle cx="10" cy="10" r="8" />
+                                <path d="m6.5 10.2 2.2 2.3 4.9-5" />
+                            </svg>
+                            @if (evaluation is
+                                {
+                                    DscCompressionRatio: double compressionRatio,
+                                    DscBitsPerPixel: double dscBitsPerPixel
+                                })
+                            {
+                                <ContextTerm Text="@($"DSC ({compressionRatio:0.##})")"
+                                             Description="@DscTooltip(compressionRatio, dscBitsPerPixel)" />
+                            }
+                            else
+                            {
+                                <ContextTerm Text="DSC"
+                                             Description="Display Stream Compression makes this signal fit the selected link method." />
+                            }
+                            @if (!string.IsNullOrWhiteSpace(evaluation.SelectedMethod))
+                            {
+                                <span class="support-separator" aria-hidden="true">·</span>
+                                <ContextTerm Text="@evaluation.SelectedMethod"
+                                             Description="@LinkMethodTooltip(evaluation)" />
+                            }
+                        }
+                        else
+                        {
+                            <svg class="support-icon support-icon-unsupported" viewBox="0 0 20 20" aria-hidden="true">
+                                <circle cx="10" cy="10" r="7.5" />
+                                <path d="m5 5 10 10" />
+                            </svg>
+                            <ContextTerm Text="@FailureLabel(evaluation.FailureKind)"
+                                         Description="@FailureTooltip(evaluation)" />
+                        }
+                    </div>
+                </article>
+            }
+        }
+        @if (UnsupportedCount > 0 && !_showUnsupported)
+        {
+            <button type="button"
+                    class="compatibility-row unsupported-reveal"
+                    aria-label="@UnsupportedExpandLabel"
+                    aria-expanded="false"
+                    aria-controls="@ListId"
+                    @onclick="ToggleUnsupported">
+                <svg class="support-icon support-icon-unsupported" viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="10" cy="10" r="7.5" />
+                    <path d="m5 5 10 10" />
+                </svg>
+                <span>@UnsupportedCount</span>
+            </button>
+        }
+        else if (UnsupportedCount > 0)
+        {
+            <button type="button"
+                    class="unsupported-collapse"
+                    aria-label="@UnsupportedCollapseLabel"
+                    aria-describedby="@CollapseTooltipId"
+                    aria-expanded="true"
+                    aria-controls="@ListId"
+                    @onclick="ToggleUnsupported">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 6-4 4 4 4" /></svg>
+                <span id="@CollapseTooltipId" class="context-tooltip" role="tooltip">
+                    <TooltipContent Title="Unsupported profiles" Description="@($"{UnsupportedCollapseLabel}.")" />
+                </span>
+            </button>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    [Parameter]
+    public string? TooltipTitle { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<InterfaceEvaluation> Evaluations { get; set; } = [];
+
+    private bool _showUnsupported;
+
+    private string EffectiveTooltipTitle =>
+        string.IsNullOrWhiteSpace(TooltipTitle) ? Title : TooltipTitle;
+    private string HeadingId => $"{Title.ToLowerInvariant().Replace(' ', '-').Replace("-c", "c")}-heading";
+    private string ListId => $"{HeadingId}-profiles";
+    private string CollapseTooltipId => $"{HeadingId}-collapse-tooltip";
+    private int UnsupportedCount => Evaluations.Count(evaluation => evaluation.Support == InterfaceSupport.No);
+    private string UnsupportedExpandLabel =>
+        $"Show {UnsupportedCount} unsupported " + (UnsupportedCount == 1 ? "profile" : "profiles");
+    private string UnsupportedCollapseLabel =>
+        $"Hide {UnsupportedCount} unsupported " + (UnsupportedCount == 1 ? "profile" : "profiles");
+
+    private void ToggleUnsupported() => _showUnsupported = !_showUnsupported;
+
+    private static string RowClass(InterfaceSupport support)
+    {
+        return support switch
+        {
+            InterfaceSupport.Native => "support-native",
+            InterfaceSupport.Compressed => "support-dsc",
+            _ => "support-no",
+        };
+    }
+
+    private static string ProfileInfo(InterfaceEvaluation evaluation)
+    {
+        if (evaluation.ProfileSummary is not { } summary)
+            return $"Available link methods: {string.Join(", ", evaluation.Methods)}.";
+
+        List<string> details = [];
+        if (summary.Kind == InterfaceKind.DisplayPort && summary.LaneCount is int displayPortLanes)
+            details.Add($"{displayPortLanes} main-link lanes");
+        else if (summary.Kind == InterfaceKind.DisplayPortAltModeOnUsbC && summary.LaneCount is int altModeLanes)
+        {
+            details.Add(altModeLanes == 2
+                ? "2 DP lanes with simultaneous USB 3 data"
+                : $"{altModeLanes} DP lanes");
+        }
+
+        details.Add($"link modes through {summary.MaximumLinkMethod}");
+        details.Add(summary.SupportsDsc ? "DSC available" : "DSC unavailable");
+        details.Add(summary.Supports420 ? "4:2:0 available" : "4:2:0 unavailable");
+        details.Add($"up to {summary.MaximumBitsPerComponent} bpc");
+        return $"{string.Join("; ", details)}.";
+    }
+
+    private static string DscTooltip(double compressionRatio, double dscBitsPerPixel)
+    {
+        double sourceBitsPerPixel = compressionRatio * dscBitsPerPixel;
+        return $"Compressed from {sourceBitsPerPixel:0.####} bpp to {dscBitsPerPixel:0.####} bpp. " +
+               "DSC rate values use 1/16-bpp precision.";
+    }
+
+    private static string SupportAriaLabel(InterfaceEvaluation evaluation)
+    {
+        return evaluation.Support switch
+        {
+            InterfaceSupport.Native => $"Supported natively using {evaluation.SelectedMethod}.",
+            InterfaceSupport.Compressed when evaluation.DscCompressionRatio is double ratio =>
+                $"Supported using DSC at a {ratio:0.##} compression ratio over {evaluation.SelectedMethod}.",
+            InterfaceSupport.Compressed => $"Supported using DSC over {evaluation.SelectedMethod}.",
+            _ => $"Unsupported because of {FailureLabel(evaluation.FailureKind)}. {evaluation.FailureReason}",
+        };
+    }
+
+    private static string FailureLabel(InterfaceFailureKind failureKind) => failureKind switch
+    {
+        InterfaceFailureKind.PixelFormat => "Format",
+        InterfaceFailureKind.Bandwidth => "Bandwidth",
+        InterfaceFailureKind.DscInputBitDepth => "DSC bit depth",
+        InterfaceFailureKind.DscQualityFloor => "DSC quality floor",
+        _ => "Limitation",
+    };
+
+    private static string FailureTooltip(InterfaceEvaluation evaluation)
+    {
+        string context = evaluation.FailureKind switch
+        {
+            InterfaceFailureKind.PixelFormat =>
+                "Format covers the requested colour encoding, chroma sampling, and bits per component.",
+            InterfaceFailureKind.Bandwidth =>
+                "Bandwidth is the usable video-payload capacity of the available link modes.",
+            InterfaceFailureKind.DscInputBitDepth =>
+                "DSC input bit depth is the component precision that the compressor can accept.",
+            InterfaceFailureKind.DscQualityFloor =>
+                "The DSC quality floor is the minimum compressed bits per pixel allowed for this chroma format.",
+            _ => "This profile has no compatible link mode for the current signal.",
+        };
+
+        return string.IsNullOrWhiteSpace(evaluation.FailureReason)
+            ? context
+            : $"{context} {evaluation.FailureReason}";
+    }
+
+    private static string LinkMethodTooltip(InterfaceEvaluation evaluation)
+    {
+        if (evaluation.SelectedLinkMethod is not { } method)
+            return $"{evaluation.SelectedMethod} is the selected link method for this signal.";
+
+        string payload = $"{method.PayloadBandwidth.GigabitsPerSecond:0.###} Gb/s";
+        return method.Transport switch
+        {
+            LinkTransport.DisplayPortMainLink =>
+                $"{method.Name} is the selected DisplayPort link rate. " +
+                $"With {method.LaneCount} DP lanes it provides up to {payload} of video payload.",
+            LinkTransport.HdmiFixedRateLink =>
+                $"{method.Name} is the selected HDMI Fixed Rate Link mode. " +
+                $"Its {method.LaneCount} lanes provide up to {payload} of video payload after link encoding.",
+            LinkTransport.HdmiTmds =>
+                $"{method.Name} is the selected HDMI TMDS mode. " +
+                $"It provides up to {payload} of video payload after TMDS encoding.",
+            _ => $"{method.Name} is the selected link method with up to {payload} of video payload.",
+        };
+    }
+}

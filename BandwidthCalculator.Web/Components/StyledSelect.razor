@@ -1,0 +1,148 @@
+@typeparam TValue
+
+<div class="@RootClass"
+     @onfocusin="HandleFocusIn"
+     @onfocusout="HandleFocusOut"
+     @onkeydown="HandleKeyDown">
+    <button @ref="_trigger"
+            id="@Id"
+            type="button"
+            class="styled-select-trigger"
+            aria-label="@AriaLabel"
+            aria-haspopup="listbox"
+            aria-expanded="@(_isOpen ? "true" : "false")"
+            aria-controls="@MenuId"
+            disabled="@Disabled"
+            @onclick="Toggle">
+        <span class="styled-select-value">
+            <span class="select-option-label">@SelectedOption?.Label</span>
+        </span>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4.25 6.25 8 10l3.75-3.75" />
+        </svg>
+    </button>
+
+    @if (_isOpen && !Disabled)
+    {
+        <div id="@MenuId" class="styled-select-menu" role="listbox" aria-label="@ListboxLabel">
+            @foreach (SelectOption<TValue> option in Options)
+            {
+                <button @key="option"
+                        type="button"
+                        class="styled-select-option @(HasTypicalOptions ? "has-marker" : null)"
+                        role="option"
+                        aria-selected="@(IsSelected(option) ? "true" : "false")"
+                        @onclick="() => SelectAsync(option.Value)">
+                    @if (HasTypicalOptions)
+                    {
+                        <span class="select-option-marker" aria-hidden="true">@(option.IsTypical ? "•" : null)</span>
+                    }
+                    <span class="select-option-label">@option.Label</span>
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private ElementReference _trigger;
+    private bool _containsFocus;
+    private bool _isOpen;
+    private int _focusVersion;
+
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public TValue Value { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<SelectOption<TValue>> Options { get; set; } = [];
+
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private string MenuId => $"{Id}-menu";
+
+    private string ListboxLabel => AriaLabel ?? "Options";
+
+    private string RootClass => string.IsNullOrWhiteSpace(Class)
+        ? "styled-select"
+        : $"styled-select {Class}";
+
+    private SelectOption<TValue>? SelectedOption => Options.FirstOrDefault(IsSelected);
+
+    private bool HasTypicalOptions => Options.Any(option => option.IsTypical);
+
+    protected override void OnParametersSet()
+    {
+        if (Disabled)
+        {
+            _isOpen = false;
+        }
+    }
+
+    private bool IsSelected(SelectOption<TValue> option) =>
+        EqualityComparer<TValue>.Default.Equals(Value, option.Value);
+
+    private void Toggle()
+    {
+        if (!Disabled)
+        {
+            _isOpen = !_isOpen;
+        }
+    }
+
+    private void HandleFocusIn(FocusEventArgs _)
+    {
+        _containsFocus = true;
+        _focusVersion++;
+    }
+
+    private async Task HandleFocusOut(FocusEventArgs _)
+    {
+        _containsFocus = false;
+        int version = ++_focusVersion;
+        await Task.Delay(50);
+        if (version == _focusVersion && !_containsFocus && _isOpen)
+        {
+            _isOpen = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && _isOpen)
+        {
+            _isOpen = false;
+            await _trigger.FocusAsync();
+            return;
+        }
+
+        if (args.Key == "ArrowDown" && !_isOpen && !Disabled)
+        {
+            _isOpen = true;
+        }
+    }
+
+    private async Task SelectAsync(TValue value)
+    {
+        _isOpen = false;
+        if (!EqualityComparer<TValue>.Default.Equals(Value, value))
+        {
+            await ValueChanged.InvokeAsync(value);
+        }
+
+        await _trigger.FocusAsync();
+    }
+}

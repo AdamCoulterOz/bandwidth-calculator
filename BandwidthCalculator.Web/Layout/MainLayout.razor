@@ -1,0 +1,14 @@
+﻿@inherits LayoutComponentBase
+
+<ErrorBoundary>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <ErrorContent Context="error">
+        <main class="fatal-error">
+            <h1>The calculator could not start</h1>
+            <p>@error.Message</p>
+            <a href=".">Reload calculator</a>
+        </main>
+    </ErrorContent>
+</ErrorBoundary>

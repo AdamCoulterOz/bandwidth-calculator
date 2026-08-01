@@ -1,0 +1,71 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      - name: Restore
+        run: dotnet restore BandwidthCalculator.slnx
+
+      - name: Test
+        run: dotnet test BandwidthCalculator.slnx -c Release --no-restore
+
+      - name: Publish WebAssembly app
+        run: dotnet publish BandwidthCalculator.Web/BandwidthCalculator.Web.csproj -c Release --no-restore -o artifacts/pages
+
+      - name: Prepare project-site paths
+        env:
+          PAGE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          publish_dir="artifacts/pages/wwwroot"
+          base_href="${PAGE_BASE_PATH}/"
+
+          if [[ "$base_href" == "//" ]]; then
+            base_href="/"
+          fi
+
+          sed -i "s|<base href=\"/\" />|<base href=\"${base_href}\" />|" "$publish_dir/index.html"
+          cp "$publish_dir/index.html" "$publish_dir/404.html"
+          touch "$publish_dir/.nojekyll"
+          grep -F "<base href=\"${base_href}\" />" "$publish_dir/index.html"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: artifacts/pages/wwwroot
+          include-hidden-files: true
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

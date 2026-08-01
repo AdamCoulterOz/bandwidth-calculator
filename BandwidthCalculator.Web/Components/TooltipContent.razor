@@ -1,0 +1,66 @@
+<span class="tooltip-content">
+    <strong class="tooltip-title">@Title</strong>
+    @if (!string.IsNullOrWhiteSpace(_summary))
+    {
+        <span class="tooltip-summary">@_summary</span>
+    }
+    @if (_bullets.Count > 0)
+    {
+        <span class="tooltip-list" role="list">
+            @foreach (string bullet in _bullets)
+            {
+                <span class="tooltip-list-item" role="listitem">@bullet</span>
+            }
+        </span>
+    }
+</span>
+
+@code {
+    private string? _summary;
+    private IReadOnlyList<string> _bullets = [];
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Description { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        string description = Description.Trim();
+        if (description.Length == 0)
+        {
+            _summary = null;
+            _bullets = [];
+            return;
+        }
+
+        string[] sentences = System.Text.RegularExpressions.Regex.Split(
+                description,
+                @"(?<=[.!?])\s+")
+            .Where(sentence => !string.IsNullOrWhiteSpace(sentence))
+            .Select(sentence => sentence.Trim())
+            .ToArray();
+
+        if (sentences.Length > 1)
+        {
+            _summary = sentences[0];
+            _bullets = sentences[1..];
+            return;
+        }
+
+        string[] clauses = description
+            .TrimEnd('.')
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (clauses.Length > 1)
+        {
+            _summary = null;
+            _bullets = clauses;
+            return;
+        }
+
+        _summary = description;
+        _bullets = [];
+    }
+}

@@ -1,0 +1,23 @@
+<section class="result-section timing-section" aria-label="Timing details">
+    <dl class="timing-grid">
+        <div><dt>Timing standard</dt><dd>@StandardLabel</dd></div>
+        <div><dt>Scan mode</dt><dd>@Timing.ScanMode</dd></div>
+        <div><dt>Pixel clock</dt><dd>@Timing.PixelClock.Megahertz.ToString("0.###") MHz</dd></div>
+        <div><dt>Horizontal frequency</dt><dd>@Timing.HorizontalFrequency.Kilohertz.ToString("0.###") kHz</dd></div>
+        <div><dt>Frame frequency</dt><dd>@Timing.FrameFrequency.Hertz.ToString("0.###") Hz</dd></div>
+        <div><dt>Field frequency</dt><dd>@Timing.FieldFrequency.Hertz.ToString("0.###") Hz</dd></div>
+        <div><dt>Horizontal active / blank</dt><dd>@Timing.HorizontalActive / @Timing.HorizontalBlank pixels</dd></div>
+        <div><dt>Horizontal total</dt><dd>@Timing.HorizontalTotal pixels</dd></div>
+        <div><dt>Vertical active / blank</dt><dd>@Timing.VerticalActive / @Timing.VerticalBlankLines.ToString("0.###") lines</dd></div>
+        <div><dt>Vertical total</dt><dd>@Timing.VerticalTotal lines</dd></div>
+    </dl>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public DisplayTiming Timing { get; set; } = null!;
+
+    private string StandardLabel => Timing.StandardTimingId is int id
+        ? $"{DisplayText.TimingStandard(Timing.Standard)} · ID {id}"
+        : DisplayText.TimingStandard(Timing.Standard);
+}

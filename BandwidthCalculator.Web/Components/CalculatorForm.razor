@@ -1,0 +1,949 @@
+<EditForm EditContext="_editContext"
+          OnSubmit="HandleSubmitAsync"
+          class="calculator-form"
+          novalidate>
+    <DataAnnotationsValidator />
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="calculation-error" role="alert">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 8v5m0 3.5v.5M10.3 3.6 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <span>@ErrorMessage</span>
+        </div>
+    }
+
+    <ScreenDiagram Width="Model.Width"
+                   Height="Model.Height"
+                   AspectRatioWidth="Model.AspectRatioWidth"
+                   AspectRatioHeight="Model.AspectRatioHeight"
+                   ResolutionName="@(DisplayResolutionPreset.Find(Model.ResolutionPresetId)?.CommonName)" />
+
+    <div class="field resolution-field">
+        <div class="field-label">
+            <GuidedLabel For="resolution-preset" Text="Preset resolutions" Description="@FieldGuidance.Resolution" />
+        </div>
+        <PresetResolutionSelect Id="resolution-preset"
+                                Value="@Model.ResolutionPresetId"
+                                ValueChanged="SelectResolutionAsync" />
+    </div>
+
+    <div class="geometry-grid">
+        <div class="field geometry-width">
+            <div class="field-label">
+                <GuidedLabel For="width" Text="Width" Description="@FieldGuidance.Width" />
+            </div>
+            <div class="control-with-unit geometry-dimension">
+                <InputNumber id="width" class="control" @bind-Value="Model.Width" @oninput="UpdateWidthAsync" min="1" inputmode="numeric" />
+                <span class="unit-suffix" aria-label="pixels">px</span>
+            </div>
+            <ValidationMessage For="@(() => Model.Width)" />
+        </div>
+
+        <div class="field geometry-ratio">
+            <div class="field-label">
+                <span class="label-text"><ContextTerm Text="Ratio" Description="@FieldGuidance.AspectRatio" /></span>
+                <button type="button"
+                        class="aspect-lock-button @(Model.LockAspectRatio ? "is-locked" : null)"
+                        aria-pressed="@(Model.LockAspectRatio ? "true" : "false")"
+                        aria-label="@(Model.LockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio")"
+                        aria-describedby="aspect-lock-tooltip"
+                        @onclick="ToggleAspectRatioLock">
+                    @if (Model.LockAspectRatio)
+                    {
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="5" y="10" width="14" height="10" rx="2" />
+                            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="5" y="10" width="14" height="10" rx="2" />
+                            <path d="M8 10V7a4 4 0 0 1 7.6-1.8" />
+                        </svg>
+                    }
+                    <span id="aspect-lock-tooltip" class="context-tooltip" role="tooltip">
+                        <TooltipContent Title="Aspect ratio lock"
+                                        Description="@(Model.LockAspectRatio
+                                            ? "Ratio locked. Editing width recalculates height; editing height recalculates width."
+                                            : "Ratio unlocked. Editing either pixel dimension preserves the other and derives a new ratio.")" />
+                    </span>
+                </button>
+            </div>
+            <div class="ratio-control" role="group" aria-label="Aspect ratio">
+                <InputNumber id="aspect-ratio-width" aria-label="Horizontal aspect ratio" class="control" @bind-Value="Model.AspectRatioWidth" @oninput="UpdateAspectRatioWidthAsync" min="1" inputmode="numeric" />
+                <span aria-hidden="true">:</span>
+                <InputNumber id="aspect-ratio-height" aria-label="Vertical aspect ratio" class="control" @bind-Value="Model.AspectRatioHeight" @oninput="UpdateAspectRatioHeightAsync" min="1" inputmode="numeric" />
+            </div>
+            <div class="ratio-validation">
+                <ValidationMessage For="@(() => Model.AspectRatioWidth)" />
+                <ValidationMessage For="@(() => Model.AspectRatioHeight)" />
+            </div>
+        </div>
+
+        <div class="field geometry-height">
+            <div class="field-label">
+                <GuidedLabel For="height" Text="Height" Description="@FieldGuidance.Height" />
+            </div>
+            <div class="control-with-unit geometry-dimension">
+                <InputNumber id="height" class="control" @bind-Value="Model.Height" @oninput="UpdateHeightAsync" min="1" inputmode="numeric" />
+                <span class="unit-suffix" aria-label="pixels">px</span>
+            </div>
+            <ValidationMessage For="@(() => Model.Height)" />
+        </div>
+    </div>
+
+    <div class="basic-grid physical-geometry-grid">
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="display-diagonal" Text="Display size" Description="@FieldGuidance.DisplayDiagonal" />
+            </div>
+            <div class="diagonal-control" role="group" aria-label="Display size">
+                <InputNumber id="display-diagonal" class="control" @bind-Value="Model.DisplayDiagonal" @oninput="UpdateDisplayDiagonalAsync" min="0.1" step="0.1" inputmode="decimal" />
+                <StyledSelect TValue="DisplayDiagonalUnit"
+                              Id="display-diagonal-unit"
+                              Class="diagonal-unit"
+                              AriaLabel="Display size unit"
+                              Options="@DisplayDiagonalUnitOptions"
+                              Value="@Model.DisplayDiagonalUnit"
+                              ValueChanged="UpdateDisplayDiagonalUnitAsync" />
+            </div>
+            <ValidationMessage For="@(() => Model.DisplayDiagonal)" />
+        </div>
+
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="pixel-density" Text="Density" Description="@FieldGuidance.PixelDensity" />
+            </div>
+            <div class="density-control">
+                <input id="pixel-density"
+                       type="number"
+                       class="control"
+                       value="@PixelDensityText"
+                       @oninput="UpdatePixelDensityAsync"
+                       @onchange="FinalizePixelDensity"
+                       min="1"
+                       step="1"
+                       inputmode="decimal"
+                       aria-invalid="@(!string.IsNullOrWhiteSpace(_pixelDensityError) ? "true" : null)" />
+                <span class="unit-suffix" aria-label="pixels per inch">ppi</span>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_pixelDensityError))
+            {
+                <div class="validation-message">@_pixelDensityError</div>
+            }
+        </div>
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="refresh-rate" Text="Refresh rate" Description="@FieldGuidance.RefreshRate" />
+            </div>
+            <div class="control-with-unit control-with-unit-compact basic-control-width">
+                <InputNumber id="refresh-rate" class="control" @bind-Value="Model.RefreshRateHertz" @oninput="UpdateRefreshRateAsync" min="0.001" step="0.001" inputmode="decimal" />
+                <span class="unit-suffix" aria-label="hertz">Hz</span>
+            </div>
+            <ValidationMessage For="@(() => Model.RefreshRateHertz)" />
+        </div>
+    </div>
+
+    <div class="basic-grid format-row colour-grid" role="group" aria-label="Colour">
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="color-depth" Text="Color depth" Description="@FieldGuidance.ColorDepth" />
+            </div>
+            <div class="control-with-unit control-with-unit-short control-with-select-unit basic-control-width">
+                <StyledSelect TValue="int"
+                              Id="color-depth"
+                              AriaLabel="Color depth"
+                              Options="@ColorDepthOptions"
+                              @bind-Value="Model.ColorBitDepth"
+                              @bind-Value:after="RecalculateAsync" />
+                <span class="unit-suffix">bits</span>
+            </div>
+        </div>
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="color-encoding" Text="Encoding" Description="@FieldGuidance.ColorEncoding" />
+            </div>
+            <StyledSelect TValue="ColorEncoding"
+                          Id="color-encoding"
+                          Class="basic-control-width encoding-select"
+                          AriaLabel="Encoding"
+                          Options="@ColorEncodingOptions"
+                          @bind-Value="SelectedColorEncoding"
+                          @bind-Value:after="RecalculateAsync" />
+        </div>
+        <div class="field">
+            <div class="field-label">
+                <GuidedLabel For="chroma-sampling" Text="Sampling" Description="@FieldGuidance.ChromaSampling" />
+            </div>
+            <StyledSelect TValue="ChromaSubsampling"
+                          Id="chroma-sampling"
+                          Class="basic-control-width"
+                          AriaLabel="Sampling"
+                          Options="@ChromaSamplingOptions"
+                          Disabled="@(Model.ColorEncoding == ColorEncoding.Rgb)"
+                          @bind-Value="Model.ChromaSubsampling"
+                          @bind-Value:after="RecalculateAsync" />
+        </div>
+    </div>
+
+    <details class="option-panel timing-options">
+        <summary>
+            <span>
+                <strong>Timing options</strong>
+                <small>Automatic defaults suit most displays.</small>
+            </span>
+        </summary>
+        <div class="option-panel-body form-pair">
+            <div class="field timing-standard-field">
+                <div class="field-label">
+                    <GuidedLabel For="timing-standard" Text="Timing standard" Description="@FieldGuidance.TimingStandard" />
+                </div>
+                <StyledSelect TValue="TimingStandard"
+                              Id="timing-standard"
+                              Class="control-fit-long"
+                              AriaLabel="Timing standard"
+                              Options="@TimingStandardOptions"
+                              @bind-Value="Model.Timing"
+                              @bind-Value:after="RecalculateAsync" />
+            </div>
+            @if (Model.Timing != TimingStandard.Cta861OptimizedVideoTiming)
+            {
+                <div class="field">
+                    <div class="field-label">
+                        <GuidedLabel For="scan-mode" Text="Scan mode" Description="@FieldGuidance.ScanMode" />
+                    </div>
+                    <StyledSelect TValue="ScanMode"
+                                  Id="scan-mode"
+                                  Class="control-fit-medium"
+                                  AriaLabel="Scan mode"
+                                  Options="@ScanModeOptions"
+                                  @bind-Value="Model.ScanMode"
+                                  @bind-Value:after="RecalculateAsync" />
+                </div>
+            }
+            <div class="field">
+                <div class="field-label">
+                    <GuidedLabel For="refresh-convention" Text="Refresh convention" Description="@FieldGuidance.RefreshConvention" />
+                </div>
+                <StyledSelect TValue="RefreshRateConvention"
+                              Id="refresh-convention"
+                              Class="control-fit-long"
+                              AriaLabel="Refresh convention"
+                              Options="@RefreshConventionOptions"
+                              @bind-Value="Model.RefreshRateConvention"
+                              @bind-Value:after="RecalculateAsync" />
+            </div>
+
+            @if (Model.Timing is TimingStandard.Dmt or TimingStandard.Cta861)
+            {
+                <div class="field">
+                    <div class="field-label">
+                        <GuidedLabel For="standard-timing-id" Text="@(Model.Timing == TimingStandard.Dmt ? "DMT ID" : "CTA VIC")" Description="@FieldGuidance.StandardTimingId" />
+                    </div>
+                    <InputNumber id="standard-timing-id" class="control control-fit-short" @bind-Value="Model.StandardTimingId" @oninput="UpdateStandardTimingIdAsync" min="1" inputmode="numeric" />
+                    <small class="field-help">Leave empty only when the requested standard mode is unambiguous.</small>
+                    <ValidationMessage For="@(() => Model.StandardTimingId)" />
+                </div>
+            }
+
+            @if (Model.Timing == TimingStandard.CvtReducedBlankingV3)
+            {
+                <div class="field">
+                    <div class="field-label">
+                        <GuidedLabel For="rbv3-horizontal-blank" Text="Horizontal blank" Description="@FieldGuidance.RbV3HorizontalBlank" />
+                    </div>
+                    <div class="control-with-unit control-with-unit-compact">
+                        <InputNumber id="rbv3-horizontal-blank" class="control" @bind-Value="Model.RbV3HorizontalBlankPixels" @oninput="UpdateRbV3HorizontalBlankAsync" step="8" min="80" max="200" />
+                        <span class="unit-suffix" aria-label="pixels">px</span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="field-label">
+                        <GuidedLabel For="rbv3-vertical-blank" Text="Minimum vertical blank" Description="@FieldGuidance.RbV3VerticalBlank" />
+                    </div>
+                    <div class="control-with-unit control-with-unit-compact">
+                        <InputNumber id="rbv3-vertical-blank" class="control" @bind-Value="Model.RbV3MinimumVerticalBlankMicroseconds" @oninput="UpdateRbV3VerticalBlankAsync" min="300" max="920" />
+                        <span class="unit-suffix" aria-label="microseconds">µs</span>
+                    </div>
+                </div>
+                <div class="check-with-info">
+                    <label class="check-field">
+                        <InputCheckbox id="rbv3-early-vsync" @bind-Value="Model.RbV3EarlyVsync" @bind-Value:after="RecalculateAsync" />
+                        <ContextTerm Text="Use early VSync" Description="@FieldGuidance.RbV3EarlyVsync" />
+                    </label>
+                </div>
+            }
+        </div>
+    </details>
+
+    <details class="option-panel exact-capabilities">
+        <summary>
+            <span>
+                <strong>Exact link capabilities <em>(optional)</em></strong>
+                <small>Use a target's negotiated lane and rate limits.</small>
+            </span>
+        </summary>
+        <div class="option-panel-body">
+            <div class="check-with-info exact-toggle-row">
+                <label class="check-field exact-toggle">
+                    <InputCheckbox id="use-exact-capabilities" @bind-Value="Model.UseExactCapabilities" @bind-Value:after="RecalculateAsync" />
+                    <span>
+                        <strong><ContextTerm Text="Evaluate custom targets" Description="@FieldGuidance.ExactTargets" /></strong>
+                        <small>Otherwise the calculator uses its built-in reference profiles.</small>
+                    </span>
+                </label>
+            </div>
+
+            <fieldset class="capability-fields" disabled="@(!Model.UseExactCapabilities ? "disabled" : null)">
+                <section class="capability-group" aria-labelledby="displayport-capability-heading">
+                    <h3 id="displayport-capability-heading">DisplayPort</h3>
+                    <div class="form-pair">
+                        <div class="field">
+                            <div class="field-label">
+                                <GuidedLabel For="dp-rate" Text="Maximum rate" Description="@FieldGuidance.DisplayPortRate" />
+                            </div>
+                            <StyledSelect TValue="DisplayPortLinkRate"
+                                          Id="dp-rate"
+                                          Class="control-fit-medium"
+                                          AriaLabel="DisplayPort maximum rate"
+                                          Options="@DisplayPortRateOptions"
+                                          @bind-Value="Model.DisplayPortMaximumRate"
+                                          @bind-Value:after="RecalculateAsync" />
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <GuidedLabel For="dp-lanes" Text="Lane count" Description="@FieldGuidance.DisplayPortLanes" />
+                            </div>
+                            <StyledSelect TValue="int"
+                                          Id="dp-lanes"
+                                          Class="control-fit-medium"
+                                          AriaLabel="DisplayPort lane count"
+                                          Options="@DisplayPortLaneOptions"
+                                          @bind-Value="Model.DisplayPortLaneCount"
+                                          @bind-Value:after="RecalculateAsync" />
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="displayport-supports-dsc" @bind-Value="Model.DisplayPortSupportsDsc" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="DSC" Description="@FieldGuidance.Dsc" /></label></div>
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="displayport-supports-420" @bind-Value="Model.DisplayPortSupports420" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="4:2:0" Description="@FieldGuidance.Supports420" /></label></div>
+                    </div>
+                </section>
+
+                <section class="capability-group" aria-labelledby="hdmi-capability-heading">
+                    <h3 id="hdmi-capability-heading">HDMI</h3>
+                    <div class="form-pair">
+                        <div class="field">
+                            <div class="field-label">
+                                <GuidedLabel For="hdmi-mode" Text="Transport" Description="@FieldGuidance.HdmiTransport" />
+                            </div>
+                            <StyledSelect TValue="HdmiCapabilityMode"
+                                          Id="hdmi-mode"
+                                          Class="control-fit-long"
+                                          AriaLabel="HDMI transport"
+                                          Options="@HdmiModeOptions"
+                                          @bind-Value="Model.HdmiMode"
+                                          @bind-Value:after="RecalculateAsync" />
+                        </div>
+                        @if (Model.HdmiMode == HdmiCapabilityMode.FixedRateLink)
+                        {
+                            <div class="field">
+                                <div class="field-label">
+                                    <GuidedLabel For="hdmi-frl-rate" Text="Maximum rate" Description="@FieldGuidance.HdmiRate" />
+                                </div>
+                                <StyledSelect TValue="HdmiFixedRateLinkRate"
+                                              Id="hdmi-frl-rate"
+                                              Class="control-fit-medium"
+                                              AriaLabel="HDMI maximum FRL rate"
+                                              Options="@HdmiFrlRateOptions"
+                                              @bind-Value="Model.HdmiMaximumFrlRate"
+                                              @bind-Value:after="RecalculateAsync" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="field">
+                                <div class="field-label">
+                                    <GuidedLabel For="hdmi-tmds-rate" Text="Maximum rate" Description="@FieldGuidance.HdmiRate" />
+                                </div>
+                                <StyledSelect TValue="HdmiTmdsRate"
+                                              Id="hdmi-tmds-rate"
+                                              Class="control-fit-medium"
+                                              AriaLabel="HDMI maximum TMDS rate"
+                                              Options="@HdmiTmdsRateOptions"
+                                              @bind-Value="Model.HdmiMaximumTmdsRate"
+                                              @bind-Value:after="RecalculateAsync" />
+                            </div>
+                        }
+                    </div>
+                    <div class="check-row">
+                        @if (Model.HdmiMode == HdmiCapabilityMode.FixedRateLink)
+                        {
+                            <div class="check-with-info"><label class="check-field"><InputCheckbox id="hdmi-supports-dsc" @bind-Value="Model.HdmiSupportsDsc" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="DSC" Description="@FieldGuidance.Dsc" /></label></div>
+                        }
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="hdmi-supports-420" @bind-Value="Model.HdmiSupports420" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="4:2:0" Description="@FieldGuidance.Supports420" /></label></div>
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="hdmi-supports-deep-color" @bind-Value="Model.HdmiSupportsDeepColor" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="Deep colour" Description="@FieldGuidance.DeepColor" /></label></div>
+                    </div>
+                </section>
+
+                <section class="capability-group" aria-labelledby="alt-mode-capability-heading">
+                    <h3 id="alt-mode-capability-heading">USB-C DisplayPort Alt Mode</h3>
+                    <div class="form-pair">
+                        <div class="field">
+                            <div class="field-label">
+                                <GuidedLabel For="alt-rate" Text="Maximum rate" Description="@FieldGuidance.AltModeRate" />
+                            </div>
+                            <StyledSelect TValue="DisplayPortLinkRate"
+                                          Id="alt-rate"
+                                          Class="control-fit-medium"
+                                          AriaLabel="USB-C maximum DisplayPort rate"
+                                          Options="@DisplayPortRateOptions"
+                                          @bind-Value="Model.AltModeMaximumRate"
+                                          @bind-Value:after="RecalculateAsync" />
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <GuidedLabel For="alt-lanes" Text="DP lane count" Description="@FieldGuidance.AltModeLanes" />
+                            </div>
+                            <StyledSelect TValue="int"
+                                          Id="alt-lanes"
+                                          Class="control-fit-long"
+                                          AriaLabel="USB-C DisplayPort lane count"
+                                          Options="@AltModeLaneOptions"
+                                          @bind-Value="Model.AltModeLaneCount"
+                                          @bind-Value:after="RecalculateAsync" />
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="altmode-supports-dsc" @bind-Value="Model.AltModeSupportsDsc" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="DSC" Description="@FieldGuidance.Dsc" /></label></div>
+                        <div class="check-with-info"><label class="check-field"><InputCheckbox id="altmode-supports-420" @bind-Value="Model.AltModeSupports420" @bind-Value:after="RecalculateAsync" /><ContextTerm Text="4:2:0" Description="@FieldGuidance.Supports420" /></label></div>
+                    </div>
+                </section>
+            </fieldset>
+        </div>
+    </details>
+</EditForm>
+
+@code {
+    private static readonly int[] ColorDepths = [6, 8, 10, 12, 14, 16];
+    private static readonly HashSet<int> TypicalColorDepths = [8, 10];
+    private static readonly HashSet<TimingStandard> TypicalTimingStandards =
+    [
+        TimingStandard.CvtReducedBlankingV2,
+        TimingStandard.Cta861,
+    ];
+    private const string PixelDensityInput = "PixelDensity";
+    private static readonly SelectOption<DisplayDiagonalUnit>[] DisplayDiagonalUnitOptions =
+    [
+        new(DisplayDiagonalUnit.Inches, "in"),
+        new(DisplayDiagonalUnit.Centimeters, "cm"),
+    ];
+    private static readonly SelectOption<int>[] ColorDepthOptions = ColorDepths
+        .Select(depth => new SelectOption<int>(depth, depth.ToString(CultureInfo.InvariantCulture), TypicalColorDepths.Contains(depth)))
+        .ToArray();
+    private static readonly SelectOption<ColorEncoding>[] ColorEncodingOptions =
+    [
+        new(ColorEncoding.Rgb, "RGB", true),
+        new(ColorEncoding.YCbCr, "YCbCr"),
+    ];
+    private static readonly SelectOption<ChromaSubsampling>[] ChromaSamplingOptions = Enum
+        .GetValues<ChromaSubsampling>()
+        .Select(sampling => new SelectOption<ChromaSubsampling>(
+            sampling,
+            DisplayText.ChromaSubsampling(sampling),
+            sampling == ChromaSubsampling.Cs444))
+        .ToArray();
+    private static readonly SelectOption<TimingStandard>[] TimingStandardOptions = Enum
+        .GetValues<TimingStandard>()
+        .Select(timing => new SelectOption<TimingStandard>(
+            timing,
+            DisplayText.TimingStandard(timing),
+            TypicalTimingStandards.Contains(timing)))
+        .ToArray();
+    private static readonly SelectOption<ScanMode>[] ScanModeOptions =
+    [
+        new(ScanMode.Progressive, "Progressive", true),
+        new(ScanMode.Interlaced, "Interlaced"),
+    ];
+    private static readonly SelectOption<RefreshRateConvention>[] RefreshConventionOptions =
+    [
+        new(RefreshRateConvention.Automatic, "Automatic", true),
+        new(RefreshRateConvention.Exact, "Exact"),
+        new(RefreshRateConvention.VideoOptimized, "1000/1001 video rate"),
+    ];
+    private static readonly SelectOption<DisplayPortLinkRate>[] DisplayPortRateOptions = Enum
+        .GetValues<DisplayPortLinkRate>()
+        .Select(rate => new SelectOption<DisplayPortLinkRate>(rate, DisplayText.DisplayPortRate(rate)))
+        .ToArray();
+    private static readonly SelectOption<int>[] DisplayPortLaneOptions =
+    [
+        new(1, "1 lane"),
+        new(2, "2 lanes"),
+        new(4, "4 lanes"),
+    ];
+    private static readonly SelectOption<HdmiCapabilityMode>[] HdmiModeOptions =
+    [
+        new(HdmiCapabilityMode.FixedRateLink, "FRL + TMDS fallback"),
+        new(HdmiCapabilityMode.Tmds, "TMDS only"),
+    ];
+    private static readonly SelectOption<HdmiFixedRateLinkRate>[] HdmiFrlRateOptions = Enum
+        .GetValues<HdmiFixedRateLinkRate>()
+        .Select(rate => new SelectOption<HdmiFixedRateLinkRate>(rate, DisplayText.HdmiFrlRate(rate)))
+        .ToArray();
+    private static readonly SelectOption<HdmiTmdsRate>[] HdmiTmdsRateOptions = Enum
+        .GetValues<HdmiTmdsRate>()
+        .Select(rate => new SelectOption<HdmiTmdsRate>(rate, DisplayText.HdmiTmdsRate(rate)))
+        .ToArray();
+    private static readonly SelectOption<int>[] AltModeLaneOptions =
+    [
+        new(2, "2 lanes + USB 3"),
+        new(4, "4 lanes"),
+    ];
+    private readonly HashSet<string> _invalidInputFields = [];
+    private EditContext _editContext = null!;
+    private CalculatorFormModel? _editContextModel;
+    private string? _pixelDensityError;
+    private string _pixelDensityText = string.Empty;
+
+    [Parameter, EditorRequired]
+    public CalculatorFormModel Model { get; set; } = null!;
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    [Parameter]
+    public EventCallback OnCalculate { get; set; }
+
+    [Parameter]
+    public EventCallback OnInvalid { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(_editContextModel, Model))
+        {
+            _editContextModel = Model;
+            _editContext = new EditContext(Model);
+            _invalidInputFields.Clear();
+            _pixelDensityError = null;
+            RefreshPixelDensityText();
+        }
+    }
+
+    private ColorEncoding SelectedColorEncoding
+    {
+        get => Model.ColorEncoding;
+        set
+        {
+            Model.ColorEncoding = value;
+            if (value == ColorEncoding.Rgb)
+                Model.ChromaSubsampling = ChromaSubsampling.Cs444;
+        }
+    }
+
+    private Task HandleSubmitAsync(EditContext _) => RecalculateAsync();
+
+    private async Task RecalculateAsync()
+    {
+        ClearInactiveInputErrors();
+        bool annotationsAreValid = _editContext.Validate();
+        if (_invalidInputFields.Count == 0 && annotationsAreValid)
+        {
+            await OnCalculate.InvokeAsync();
+            return;
+        }
+
+        await OnInvalid.InvokeAsync();
+    }
+
+    private async Task SelectResolutionAsync(string value)
+    {
+        Model.ResolutionPresetId = value;
+        DisplayResolutionPreset? preset = DisplayResolutionPreset.Find(Model.ResolutionPresetId);
+        if (preset is null)
+        {
+            await RecalculateAsync();
+            return;
+        }
+
+        Model.Width = preset.Width;
+        Model.Height = preset.Height;
+        if (preset.AspectRatioWidth is > 0 && preset.AspectRatioHeight is > 0)
+        {
+            Model.AspectRatioWidth = preset.AspectRatioWidth.Value;
+            Model.AspectRatioHeight = preset.AspectRatioHeight.Value;
+        }
+        else
+        {
+            DeriveAspectRatio();
+        }
+
+        if (preset.DisplayDiagonalInches is > 0d)
+        {
+            SetDisplayDiagonal(Length.FromInches(preset.DisplayDiagonalInches.Value));
+        }
+
+        RefreshPixelDensityText();
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateWidthAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.Width), parsed);
+        if (parsed)
+        {
+            Model.Width = value;
+            if (Model.LockAspectRatio)
+            {
+                if (value > 0 && Model.AspectRatioWidth > 0 && Model.AspectRatioHeight > 0 &&
+                    TryScaleDimension(value, Model.AspectRatioHeight, Model.AspectRatioWidth, out int height))
+                {
+                    Model.Height = height;
+                }
+            }
+            else
+            {
+                DeriveAspectRatio();
+            }
+
+            MatchResolutionPreset();
+            RefreshPixelDensityText();
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateHeightAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.Height), parsed);
+        if (parsed)
+        {
+            Model.Height = value;
+            if (Model.LockAspectRatio)
+            {
+                if (value > 0 && Model.AspectRatioWidth > 0 && Model.AspectRatioHeight > 0 &&
+                    TryScaleDimension(value, Model.AspectRatioWidth, Model.AspectRatioHeight, out int width))
+                {
+                    Model.Width = width;
+                }
+            }
+            else
+            {
+                DeriveAspectRatio();
+            }
+
+            MatchResolutionPreset();
+            RefreshPixelDensityText();
+        }
+
+        await RecalculateAsync();
+    }
+
+    private void ToggleAspectRatioLock() => Model.LockAspectRatio = !Model.LockAspectRatio;
+
+    private string PixelDensityText => _pixelDensityText;
+
+    private async Task UpdateDisplayDiagonalAsync(ChangeEventArgs args)
+    {
+        bool parsed = double.TryParse(
+            args.Value?.ToString(),
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out double value);
+        SetInputValidity(nameof(CalculatorFormModel.DisplayDiagonal), parsed);
+        if (parsed)
+        {
+            Model.DisplayDiagonal = value;
+            RefreshPixelDensityText();
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdatePixelDensityAsync(ChangeEventArgs args)
+    {
+        _pixelDensityText = args.Value?.ToString() ?? string.Empty;
+        bool parsed = double.TryParse(
+            _pixelDensityText,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out double pixelsPerInch);
+
+        if (!parsed || !double.IsFinite(pixelsPerInch) || pixelsPerInch <= 0d)
+        {
+            SetPixelDensityError("Density must be greater than zero.");
+            await RecalculateAsync();
+            return;
+        }
+
+        pixelsPerInch = Math.Round(pixelsPerInch, 0, MidpointRounding.AwayFromZero);
+        _pixelDensityText = pixelsPerInch.ToString("0", CultureInfo.InvariantCulture);
+
+        if (!TryResizeToPixelDensity(pixelsPerInch, out int width, out int height))
+        {
+            SetPixelDensityError("Density is outside the supported pixel-dimension range.");
+            await RecalculateAsync();
+            return;
+        }
+
+        Model.Width = width;
+        Model.Height = height;
+        MatchResolutionPreset();
+        SetPixelDensityError(null);
+        await RecalculateAsync();
+    }
+
+    private void FinalizePixelDensity(ChangeEventArgs _)
+    {
+        if (string.IsNullOrWhiteSpace(_pixelDensityError))
+        {
+            RefreshPixelDensityText();
+        }
+    }
+
+    private async Task UpdateDisplayDiagonalUnitAsync(DisplayDiagonalUnit unit)
+    {
+        if (unit == Model.DisplayDiagonalUnit)
+        {
+            await RecalculateAsync();
+            return;
+        }
+
+        if (double.IsFinite(Model.DisplayDiagonal) && Model.DisplayDiagonal > 0d)
+        {
+            Length diagonal = GetDisplayDiagonal();
+            Model.DisplayDiagonalUnit = unit;
+            SetDisplayDiagonal(diagonal);
+            await RecalculateAsync();
+            return;
+        }
+
+        Model.DisplayDiagonalUnit = unit;
+        await RecalculateAsync();
+    }
+
+    private Length GetDisplayDiagonal() => Model.DisplayDiagonalUnit switch
+    {
+        DisplayDiagonalUnit.Inches => Length.FromInches(Model.DisplayDiagonal),
+        DisplayDiagonalUnit.Centimeters => Length.FromCentimeters(Model.DisplayDiagonal),
+        _ => throw new InvalidOperationException($"Unsupported display diagonal unit {Model.DisplayDiagonalUnit}."),
+    };
+
+    private void SetDisplayDiagonal(Length diagonal)
+    {
+        Model.DisplayDiagonal = Model.DisplayDiagonalUnit switch
+        {
+            DisplayDiagonalUnit.Inches => diagonal.Inches,
+            DisplayDiagonalUnit.Centimeters => diagonal.Centimeters,
+            _ => throw new InvalidOperationException($"Unsupported display diagonal unit {Model.DisplayDiagonalUnit}."),
+        };
+    }
+
+    private async Task UpdateAspectRatioWidthAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.AspectRatioWidth), parsed);
+        if (!parsed)
+        {
+            await RecalculateAsync();
+            return;
+        }
+
+        Model.AspectRatioWidth = value;
+        if (value > 0 && Model.AspectRatioHeight > 0 && TryScaleDimension(Model.Height, value, Model.AspectRatioHeight, out int width))
+        {
+            Model.Width = width;
+            MatchResolutionPreset();
+            RefreshPixelDensityText();
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateAspectRatioHeightAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.AspectRatioHeight), parsed);
+        if (!parsed)
+        {
+            await RecalculateAsync();
+            return;
+        }
+
+        Model.AspectRatioHeight = value;
+        if (value > 0 && Model.AspectRatioWidth > 0 && TryScaleDimension(Model.Width, value, Model.AspectRatioWidth, out int height))
+        {
+            Model.Height = height;
+            MatchResolutionPreset();
+            RefreshPixelDensityText();
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateRefreshRateAsync(ChangeEventArgs args)
+    {
+        bool parsed = double.TryParse(
+            args.Value?.ToString(),
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out double value);
+        SetInputValidity(nameof(CalculatorFormModel.RefreshRateHertz), parsed);
+        if (parsed)
+        {
+            Model.RefreshRateHertz = value;
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateStandardTimingIdAsync(ChangeEventArgs args)
+    {
+        string? text = args.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            Model.StandardTimingId = null;
+            SetInputValidity(nameof(CalculatorFormModel.StandardTimingId), true);
+            await RecalculateAsync();
+            return;
+        }
+
+        bool parsed = int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.StandardTimingId), parsed);
+        if (parsed)
+        {
+            Model.StandardTimingId = value;
+        }
+
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateRbV3HorizontalBlankAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.RbV3HorizontalBlankPixels), parsed);
+        if (parsed)
+            Model.RbV3HorizontalBlankPixels = value;
+        await RecalculateAsync();
+    }
+
+    private async Task UpdateRbV3VerticalBlankAsync(ChangeEventArgs args)
+    {
+        bool parsed = TryParseInt(args, out int value);
+        SetInputValidity(nameof(CalculatorFormModel.RbV3MinimumVerticalBlankMicroseconds), parsed);
+        if (parsed)
+            Model.RbV3MinimumVerticalBlankMicroseconds = value;
+        await RecalculateAsync();
+    }
+
+    private bool TryResizeToPixelDensity(double pixelsPerInch, out int width, out int height)
+    {
+        double ratioWidth = Model.AspectRatioWidth;
+        double ratioHeight = Model.AspectRatioHeight;
+        double ratioDiagonal = Math.Sqrt((ratioWidth * ratioWidth) + (ratioHeight * ratioHeight));
+        double pixelDiagonal = GetDisplayDiagonal().Inches * pixelsPerInch;
+
+        bool widthIsValid = TryRoundPixelDimension(pixelDiagonal * ratioWidth / ratioDiagonal, out width);
+        bool heightIsValid = TryRoundPixelDimension(pixelDiagonal * ratioHeight / ratioDiagonal, out height);
+        return widthIsValid && heightIsValid;
+    }
+
+    private static bool TryRoundPixelDimension(double value, out int result)
+    {
+        if (!double.IsFinite(value) || value < 1d || value > int.MaxValue)
+        {
+            result = default;
+            return false;
+        }
+
+        result = (int)Math.Round(value, MidpointRounding.AwayFromZero);
+        return true;
+    }
+
+    private void SetPixelDensityError(string? message)
+    {
+        _pixelDensityError = message;
+        SetInputValidity(PixelDensityInput, message is null);
+    }
+
+    private void RefreshPixelDensityText()
+    {
+        _pixelDensityText = double.IsFinite(Model.PixelsPerInch)
+            ? Math.Round(Model.PixelsPerInch, 0, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture)
+            : string.Empty;
+        SetPixelDensityError(null);
+    }
+
+    private void SetInputValidity(string field, bool isValid)
+    {
+        if (isValid)
+        {
+            _invalidInputFields.Remove(field);
+            return;
+        }
+
+        _invalidInputFields.Add(field);
+    }
+
+    private void ClearInactiveInputErrors()
+    {
+        if (Model.Timing is not (TimingStandard.Dmt or TimingStandard.Cta861))
+        {
+            _invalidInputFields.Remove(nameof(CalculatorFormModel.StandardTimingId));
+        }
+
+        if (Model.Timing != TimingStandard.CvtReducedBlankingV3)
+        {
+            _invalidInputFields.Remove(nameof(CalculatorFormModel.RbV3HorizontalBlankPixels));
+            _invalidInputFields.Remove(nameof(CalculatorFormModel.RbV3MinimumVerticalBlankMicroseconds));
+        }
+    }
+
+    private static bool TryParseInt(ChangeEventArgs args, out int value) =>
+        int.TryParse(
+            args.Value?.ToString(),
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out value);
+
+    private void DeriveAspectRatio()
+    {
+        if (Model.Width <= 0 || Model.Height <= 0)
+        {
+            return;
+        }
+
+        int divisor = GreatestCommonDivisor(Model.Width, Model.Height);
+        Model.AspectRatioWidth = Model.Width / divisor;
+        Model.AspectRatioHeight = Model.Height / divisor;
+    }
+
+    private void MatchResolutionPreset() =>
+        Model.ResolutionPresetId = DisplayResolutionPreset.Match(Model.Width, Model.Height);
+
+    private static int GreatestCommonDivisor(int left, int right)
+    {
+        while (right != 0)
+        {
+            (left, right) = (right, left % right);
+        }
+
+        return left;
+    }
+
+    private static bool TryScaleDimension(int fixedDimension, int ratioPart, int fixedRatioPart, out int result)
+    {
+        double scaled = (double)fixedDimension * ratioPart / fixedRatioPart;
+        if (!double.IsFinite(scaled) || scaled < 1d || scaled > int.MaxValue)
+        {
+            result = default;
+            return false;
+        }
+
+        result = (int)Math.Round(scaled, MidpointRounding.AwayFromZero);
+        return true;
+    }
+}
