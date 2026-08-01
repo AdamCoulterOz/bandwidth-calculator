@@ -81,6 +81,8 @@ Optional timing precision is expressed through `ScanMode`, `RefreshRateConventio
 
 The public application is hosted at `https://adamcoulteroz.github.io/bandwidth-calculator/`. The path is part of the deployment contract: published `index.html` and its `404.html` fallback use `/bandwidth-calculator/` as their base path, while source and local development retain `/`.
 
+The published static surface also exposes canonical and social metadata, Schema.org application data, `robots.txt`, `sitemap.xml`, a descriptive no-JavaScript fallback, and a footer route back to `https://adamcoulteroz.github.io/`. The fallback describes the calculator but does not perform calculations or duplicate domain logic.
+
 The default UI collects resolution, refresh rate, colour depth/encoding, chroma sampling, and timing standard, then calls `Calculate(input)` with built-in reference profiles. It recalculates after every valid input change; an invalid or incomplete edit clears stale results until the form is valid again. Optional timing controls expose scan mode, refresh convention, DMT/CTA identity, and RBv3 parameters only where relevant.
 
 The collapsed exact-capabilities section accepts maximum standard rate, lane count, pixel-format support, and DSC support for DisplayPort, HDMI, and USB-C DisplayPort Alt Mode. When enabled it constructs one explicit profile per transport through the public factory methods and calls the exact-capability overload.

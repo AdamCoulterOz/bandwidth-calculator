@@ -150,11 +150,108 @@ a {
     color: var(--blue);
 }
 
+.noscript-page {
+    display: grid;
+    min-height: 100vh;
+    padding: 48px 24px;
+    place-items: center;
+}
+
+.noscript-card {
+    width: min(100%, 720px);
+    padding: clamp(28px, 6vw, 56px);
+    border-radius: var(--radius-xl);
+    background: var(--surface-panel);
+    box-shadow: var(--shadow-overlay);
+}
+
+.noscript-mark {
+    width: 48px;
+    height: 48px;
+}
+
+.noscript-eyebrow {
+    margin: 24px 0 8px;
+    color: var(--blue);
+    font: 600 0.76rem/1.2 var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.noscript-card h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 8vw, 4.5rem);
+    letter-spacing: -0.05em;
+    line-height: 0.95;
+}
+
+.noscript-card h2 {
+    margin: 32px 0 10px;
+    font-size: 1.1rem;
+}
+
+.noscript-card p,
+.noscript-card li {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.noscript-card ul {
+    display: grid;
+    margin: 0;
+    padding-left: 1.25rem;
+    gap: 7px;
+}
+
+.noscript-card a,
+.site-home-link {
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.noscript-card a:hover,
+.site-home-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
 .app-shell {
     width: min(100%, 1600px);
     min-height: 100vh;
     margin: 0 auto;
     padding: 0 32px;
+}
+
+.site-footer {
+    background: var(--surface-group);
+}
+
+.site-footer-inner {
+    display: flex;
+    width: min(100%, 1600px);
+    min-height: 72px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    align-items: center;
+    justify-content: center;
+}
+
+.site-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.86rem;
+}
+
+.site-home-link svg {
+    width: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
 }
 
 .app-header {
@@ -1802,6 +1899,10 @@ fieldset:disabled .check-field {
         align-items: center;
         gap: 8px;
         padding: 7px 10px;
+    }
+
+    .site-footer-inner {
+        padding-inline: 12px;
     }
 
     .brand-mark {

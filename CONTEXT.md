@@ -24,6 +24,7 @@ The implementation targets UnitsNet `6.0.0-pre021`. Information, bitrate, freque
 - `BandwidthCalculator.Web/Models/DisplayResolutionPreset.cs` owns the UI's named resolution catalogue, including standard monitor modes and documented Apple panel/virtual-display rasters; presets populate pixel geometry but do not add calculator policy.
 - `BandwidthCalculator.Web/Components` contains the form, metric, timing, and compatibility presentation components.
 - `BandwidthCalculator.Web/Pages/Home.razor` owns the synchronous UI calculation workflow and error state.
+- `BandwidthCalculator.Web/wwwroot/index.html`, `robots.txt`, and `sitemap.xml` own the canonical SEO, social, structured, crawler, and no-JavaScript discovery surface; the interactive UI remains the only calculation surface.
 - The test project separates saved scenarios, independent timing vectors, interface boundaries, and validation/overflow cases.
 
 ## Current invariants
@@ -40,6 +41,8 @@ The implementation targets UnitsNet `6.0.0-pre021`. Information, bitrate, freque
 - Custom interface profiles expose negotiated capabilities explicitly and do not infer them from a version label.
 - Transport type owns blanking behavior, and profiles cannot mix DisplayPort and HDMI link modes.
 - The WebAssembly project contains no copied timing, bandwidth, DSC, or transport formulas; it consumes the library assembly as the semantic authority.
+- With JavaScript disabled, the published page presents a plain-text description of the calculator and its scope rather than a nonfunctional loading indicator. It does not claim to calculate without WebAssembly.
+- The interactive page footer and no-JavaScript description both link back to the root project index at `https://adamcoulteroz.github.io/`.
 - The simple UI path never requires a lane count, link rate, or DSC flag. Exact capability controls are optional and collapsed by default.
 - Invalid UI input clears stale results, and calculation failures are shown without substituting a fallback result.
 - The UI follows the operating-system light/dark preference through `prefers-color-scheme`; it does not own or persist a separate theme choice. Its presentation uses Meridian's Keel design language: Hanken Grotesk for interface copy, Fira Code for dense numeric output, neutral layered surfaces, blue interaction accents, 10/12/18-pixel radii, shared motion and focus tokens, and the exact light/dark Keel palette.

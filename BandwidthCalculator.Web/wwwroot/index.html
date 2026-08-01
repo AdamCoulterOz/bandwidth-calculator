@@ -6,9 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bandwidth Calculator</title>
     <meta name="description" content="Calculate display timing, video bandwidth and DisplayPort, HDMI and USB-C link compatibility." />
+    <meta name="keywords" content="display bandwidth calculator, monitor bandwidth, pixel clock, refresh rate, DisplayPort bandwidth, HDMI bandwidth, USB-C DisplayPort Alt Mode, DSC compression, video timing" />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#181a1b" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Bandwidth Calculator" />
+    <meta property="og:description" content="Calculate display timing, video bandwidth and DisplayPort, HDMI and USB-C link compatibility." />
+    <meta property="og:url" content="https://adamcoulteroz.github.io/bandwidth-calculator/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Bandwidth Calculator" />
+    <meta name="twitter:description" content="Display timing, video bandwidth and link compatibility for common monitor configurations." />
     <base href="/" />
+    <link rel="canonical" href="https://adamcoulteroz.github.io/bandwidth-calculator/" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,6 +26,25 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Bandwidth Calculator",
+        "url": "https://adamcoulteroz.github.io/bandwidth-calculator/",
+        "description": "Calculate display timing, video bandwidth and DisplayPort, HDMI and USB-C link compatibility.",
+        "applicationCategory": "UtilityApplication",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "browserRequirements": "JavaScript and WebAssembly are required for interactive calculations.",
+        "author": {
+            "@type": "Person",
+            "name": "Adam Coulter",
+            "url": "https://adamcoulteroz.github.io/"
+        }
+    }
+    </script>
+    <noscript><style>#app { display: none; }</style></noscript>
     <script type="importmap"></script>
 </head>
 
@@ -27,6 +56,26 @@
         </svg>
         <div class="loading-progress-text"></div>
     </div>
+
+    <noscript>
+        <main class="noscript-page">
+            <article class="noscript-card">
+                <img class="noscript-mark" src="favicon.svg" alt="" />
+                <p class="noscript-eyebrow">Display engineering utility</p>
+                <h1>Bandwidth Calculator</h1>
+                <p>Estimate display timing, pixel clock and video bandwidth for a resolution, refresh rate, colour depth, encoding and chroma-sampling configuration.</p>
+                <h2>What the calculator covers</h2>
+                <ul>
+                    <li>Active-image and blanked-raster bandwidth.</li>
+                    <li>DisplayPort, HDMI and USB-C DisplayPort Alt Mode reference compatibility.</li>
+                    <li>Native transport and Display Stream Compression (DSC) requirements.</li>
+                    <li>Common display resolutions, timing standards and exact negotiated link capabilities.</li>
+                </ul>
+                <p>The interactive calculator runs locally in your browser and requires JavaScript and WebAssembly. No display configuration is sent to a server.</p>
+                <p><a href="https://adamcoulteroz.github.io/">Back to Adam Coulter's projects and tools</a></p>
+            </article>
+        </main>
+    </noscript>
 
     <div id="blazor-error-ui">
         The calculator encountered an unexpected error.

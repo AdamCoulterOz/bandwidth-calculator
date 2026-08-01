@@ -125,3 +125,9 @@
 - Adopted Meridian's Keel palette, Hanken Grotesk and Fira Code typography, radii, focus, motion, and layered surface tokens across the Blazor UI.
 - Recast the compact header as the shared 64-pixel frosted navigation surface and aligned form, metric, compatibility, timing, and tooltip surfaces with the same light/dark system theme.
 - Preserved the calculator's app-specific layout, monitor identity, responsive projections, labels, calculations, and optional exact-capability workflow without changing its public semantic contract.
+
+## 2026-08-02: Add static discovery and parent navigation
+
+- Added canonical, keyword, social, crawler, and Schema.org metadata for the published calculator.
+- Replaced the JavaScript-disabled loading-only page with an honest plain-text description of the calculator's scope and local WebAssembly requirement.
+- Added a persistent footer route back to the root Adam Coulter project index.
